@@ -1,0 +1,87 @@
+# Alpine-Maintainer: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Felix Xing <fxing@qnx.com>
+pkgname=qt6-quick3d
+pkgver=6.10.0
+pkgrel=0
+pkgdesc="Qt module and API for defining 3D content in Qt Quick"
+url="https://qt.io/"
+arch="all"
+license="LGPL-2.1-only AND LGPL-3.0-only AND GPL-3.0-only AND Qt-GPL-exception-1.0"
+depends="
+    assimp-libs
+    libc++
+    libxkbcommon
+    qt6-base
+    qt6-declarative
+    qt6-quicktimeline
+    qt6-shadertools
+    zlib-ng
+    qnx-egl
+    qnx-gles
+    qnx-io-sock
+    "
+depends_dev="
+    qt6-declarative-dev
+    qt6-quicktimeline-dev
+    qt6-shadertools-dev
+    vulkan-headers
+    "
+makedepends="$depends_dev
+    assimp-dev
+    cmake
+    perl
+    qt6-declarative-private-dev
+    ninja
+    "
+subpackages="$pkgname-dev"
+options="!check" # No tests
+builddir="$srcdir/qtquick3d-everywhere-src-${pkgver/_/-}"
+source="https://download.qt.io/official_releases/qt/${pkgver%.*}/${pkgver/_/-}/submodules/qtquick3d-everywhere-src-${pkgver/_/-}.tar.xz
+        001-fix-wrap-assimp.patch
+        "
+
+build() {
+    # It's qcc here, but compiled with clang on the selfhosted system
+    if [[ $CARCH == "x86_64" ]]; then
+        _triplet="qnx-x86-64-qcc"
+    elif [[ $CARCH == "aarch64" ]]; then
+        _triplet="qnx-aarch64le-qcc"
+    else
+        die "$CARCH not supported"
+    fi
+
+    _warn="-Wno-character-conversion"
+
+    export CC=clang
+    export CXX=clang++
+    export CFLAGS="$_warn"
+    export CXXFLAGS="$_warn"
+    export LDFLAGS="-lsocket -lassimp"
+    export LD_LIBRARY_PATH="$builddir/build/lib:$LD_LIBRARY_PATH"
+
+    cmake -B build -G Ninja \
+        -DCMAKE_SKIP_RPATH=ON \
+        -DQT_QMAKE_TARGET_MKSPEC=$_triplet \
+        -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF \
+        -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_MESSAGE_LOG_LEVEL=Verbose \
+        -DFEATURE_pkg_config=ON
+
+    cmake --build build --parallel
+}
+
+package() {
+    DESTDIR="$pkgdir" cmake --install build
+}
+
+dev() {
+    default_dev
+
+    amove usr/lib/qt6/sbom
+}
+
+sha512sums="
+5e86ec1f92b49b4fe44a8b1c67190e1969e4385e1b106e09c186be61a0f3f4d7809791334b72ae9f6f5d75372cc9a97d248aeb0876651f4f156d2c365d4b9dfa  qtquick3d-everywhere-src-6.10.0.tar.xz
+794dc4205ac3029b72f169dca16826c43d6cde27326d6e10363aa22d6b11d6e85523e7e4421a471b75dadf95ca83ee84a8e93941a719349dba20c197f25b1c3f  001-fix-wrap-assimp.patch
+"

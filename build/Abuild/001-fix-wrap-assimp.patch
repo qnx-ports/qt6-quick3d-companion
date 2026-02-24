@@ -1,0 +1,13 @@
+diff --git a/cmake/FindWrapQuick3DAssimp.cmake b/cmake/FindWrapQuick3DAssimp.cmake
+index aef617b..073351c 100644
+--- a/cmake/FindWrapQuick3DAssimp.cmake
++++ b/cmake/FindWrapQuick3DAssimp.cmake
+@@ -7,7 +7,7 @@ if(TARGET WrapQuick3DAssimp::WrapQuick3DAssimp)
+ endif()
+ set(WrapQuick3DAssimp_FOUND FALSE)
+ 
+-find_package(assimp ${WrapQuick3DAssimp_FIND_VERSION} CONFIG QUIET)
++find_package(assimp CONFIG)
+ if (assimp_FOUND AND TARGET assimp::assimp)
+   add_library(WrapQuick3DAssimp::WrapQuick3DAssimp INTERFACE IMPORTED)
+   target_link_libraries(WrapQuick3DAssimp::WrapQuick3DAssimp INTERFACE assimp::assimp)
